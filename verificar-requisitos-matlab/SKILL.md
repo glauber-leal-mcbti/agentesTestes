@@ -12,7 +12,7 @@ description: "Carrega, checa, lista quantos requisitos estão presentes em um ar
 | Ferramenta | Uso |
 |------------|-----|
 | `evaluate_matlab_code` | Executa código MATLAB |
-| `detect_matlab_toolboxes` | Verifica toolboxes |
+| `run_matlab_script` | Executa script .m |
 | `check_matlab_code` | Analisa código |
 
 ## Estrutura de Requisitos
@@ -50,11 +50,8 @@ Após execução, as variáveis estarão disponíveis:
 
 O contexto do projeto já estará configurado no MATLAB.
 
-### Passo 3: Verificar toolboxes necessários
 
-Não é necessãrio executar nenhum código nessa etapa.
-
-### Passo 4: Carregar arquivo de requisitos
+### Passo 3: Carregar arquivo de requisitos
 
 Carregue o arquivo de requisitos e motre ao usuário quais requisitos implementados
 Use `evaluate_matlab_code` com:
@@ -65,7 +62,7 @@ requisitos = reqSet.find('Type', 'Requirement');
 
 Se o arquivo não for encontrado cancele a operação.
 
-### Passo 5: Descrever requisitos
+### Passo 4: Descrever requisitos
 
 Extraia os requisitos e motre ao usuário utilizando o seguinte script. 
 Antes de executar o loop, adicione o diretório de scripts da skill ao path do MATLAB. O diretório base desta skill é conhecido — use-o para construir o caminho.
@@ -82,7 +79,7 @@ for i = 1:length(requisitos)
 end
 ```
 
-### Passo 6: Retorno da chamada
+### Passo 5: Retorno da chamada
 
 Retorne para o usuario ou outra skill os uma tabela com os dados dos requisitos que foram lidos nessa execução.
 

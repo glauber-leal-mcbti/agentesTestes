@@ -5,18 +5,13 @@ description: "Gerencia o processo completo de criação de um test no simulink, 
 ## Pre-requisitos
 - MATLAB instalado com licença valida
 - matlab-mcp-server instalado
-- Speedgoat Support Package instalado
-- Simulink Test API instalado
-- matlab-mcp-server configurado e conectado
 
 ## Ferramentas MCP Disponíveis
 
 | Ferramenta | Uso |
 |------------|-----|
-| `set_project_context` | Define diretório de trabalho |
 | `evaluate_matlab_code` | Executa código MATLAB |
 | `run_matlab_script` | Executa script .m |
-| `detect_matlab_toolboxes` | Verifica toolboxes |
 | `check_matlab_code` | Analisa código |
 
 ## Estrutura de Requisitos

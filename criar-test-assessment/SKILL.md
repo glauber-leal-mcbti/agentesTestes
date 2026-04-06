@@ -12,10 +12,8 @@ description: "Cria um test assessment para um Test Manager, um Test Suite e um T
 
 | Ferramenta | Uso |
 |------------|-----|
-| `set_project_context` | Define diretório de trabalho |
 | `evaluate_matlab_code` | Executa código MATLAB |
 | `run_matlab_script` | Executa script .m |
-| `detect_matlab_toolboxes` | Verifica toolboxes |
 | `check_matlab_code` | Analisa código |
 
 ## Template

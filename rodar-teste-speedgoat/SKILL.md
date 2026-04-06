@@ -12,10 +12,8 @@ description: "Executa os testes presentes em um arquivo .mldatx do Simulink Test
 
 | Ferramenta | Uso |
 |------------|-----|
-| `set_project_context` | Define diretório de trabalho |
 | `evaluate_matlab_code` | Executa código MATLAB |
 | `run_matlab_script` | Executa script .m |
-| `detect_matlab_toolboxes` | Verifica toolboxes |
 | `check_matlab_code` | Analisa código |
 
 ## Workflow
@@ -54,15 +52,7 @@ Após execução, as variáveis estarão disponíveis:
 
 O contexto do projeto já estará configurado no MATLAB.
 
-### Passo 3: Verificar toolboxes necessários
-
-Use `detect_matlab_toolboxes` para confirmar que estão instalados:
-- Simulink Test
-- Speedgoat Support Package
-
-Se algum estiver faltando, informe o usuário e interrompa.
-
-## Passo 4: Conectar na Speedgoat
+## Passo 3: Conectar na Speedgoat
 
 Use `evaluate_matlab_code` com:
 ```matlab
@@ -77,7 +67,7 @@ Use `evaluate_matlab_code` com:
 
 Se a conexão não for bem sucedida, tente novamente três vezes, e retorne ao usuário. Caso não esteja conectado, finalizar execução.
 
-## Passo 5: Fazer upload código controlador
+## Passo 4: Fazer upload código controlador
 Faça upload do código do controlador no hardware especificado no arquivo disponibilizado. Primeiro navegue até o repositório `{CONTROL_PATH}` e então faça o upload:
 Execute via bash_tool:
 ```bash
@@ -87,7 +77,7 @@ pio run --target upload
 
 Verifique se o upload foi executado. Se não termine a operação.
 
-### Passo 6: Carregar e analisar arquivo de testes
+### Passo 5: Carregar e analisar arquivo de testes
 
 Use `evaluate_matlab_code` com:
 ```matlab
@@ -120,7 +110,7 @@ disp(['TOTAL_TESTES: ', num2str(totalTestes)]);
 
 Informe ao usuário quantos suites e testes foram encontrados.
 
-### Passo 7: Configurações Específicas
+### Passo 6: Configurações Específicas
 Realize as seguintes configurações a seguir. A ideia é pegar qual o modelo sendo executado no teste, e mudar um parmetro no mesmo
 Use `evaluate_matlab_code` com:
 ```matlab
@@ -128,11 +118,11 @@ open_system("SystemHIL_Simscape")
 set_param("SystemHIL_Simscape/IHM/setpointManual", "Value","0");
 ```
 
-### Passo 8: Executar testes
+### Passo 7: Executar testes
 
 **Importante**: Execute os testes em blocos menores para evitar timeout.
 
-#### 8.1: Executar testes e coletar resultados
+#### 7.1: Executar testes e coletar resultados
 
 Use `evaluate_matlab_code` com:
 ```matlab
@@ -165,7 +155,7 @@ end
 disp('TESTES_CONCLUIDOS');
 ```
 
-#### 8.2: Gerar relatório
+#### 7.2: Gerar relatório
 
 Use `evaluate_matlab_code` com:
 ```matlab
@@ -190,7 +180,7 @@ sltest.testmanager.TestSpecReport(tcases, 'testReport.pdf',...
 disp('RELATORIO_GERADO');
 ```
 
-#### 8.3: Exibir sumário
+#### 7.3: Exibir sumário
 
 Use `evaluate_matlab_code` com:
 ```matlab
@@ -212,7 +202,7 @@ disp(['Passaram: ', num2str(passaram)]);
 disp(['Falharam: ', num2str(falharam)]);
 disp(['Erros: ', num2str(erros)]);
 ```
-### Passo 9: Apresentar resultados
+### Passo 8: Apresentar resultados
 
 Apresente ao usuário:
 - Total de testes executados
@@ -255,7 +245,7 @@ Se houver testes que falharam, liste-os abaixo:
 ```
 
 
-### Passo 10: Finalizar MATLAB
+### Passo 9: Finalizar MATLAB
 Finalize as operações do MATLAB, fechando a conexão com a speedgoat e fechando o TestManager.
 Use `evaluate_matlab_code` com:
 ```matlab

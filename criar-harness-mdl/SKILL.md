@@ -17,9 +17,17 @@ Abordagem híbrida:
 ## Considerações
 O ambiente matlab e o projeto com os paths já vai estar configurado.
 
+## Ferramentas MCP Disponíveis
+
+| Ferramenta | Uso |
+|------------|-----|
+| `evaluate_matlab_code` | Executa código MATLAB |
+| `run_matlab_script` | Executa script .m |
+| `check_matlab_code` | Analisa código |
+
 ## Variáveis de entrada
 
-Coletar dos argumentos da chamada:
+Coletar dos argumentos da chamada. Utilize `AskUserQuestion`:
 
 | Variável | Descrição |
 |----------|-----------|
@@ -38,7 +46,10 @@ Derivar automaticamente se `{PASTA_DESTINO}` não fornecida:
 ---
 
 ## Passo 1 — Carregar modelo e inspecionar portas (API)
-Considere que o projeto foi configurado no ambiente matlab e que os paths estão configurados.
+Caso o projeto não tenha sido aberto, leia e execute a skill `abrir-projeto-matlab/SKILL.md` usando `view`. Passe como parâmetro para essa skill:
+  - `{VERSAO_MATLAB}`
+  - `{CAMINHO_PRJ}`
+
 Use `evaluate_matlab_code` com:
 ```matlab
 

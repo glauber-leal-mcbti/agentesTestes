@@ -6,6 +6,14 @@ description: "Inicia o procedimento de abrir um .prj no matlab, abrir um script 
 - MATLAB instalado com licença valida
 - MATLAB Test toolbox disponível
 
+## Ferramentas MCP Disponíveis
+
+| Ferramenta | Uso |
+|------------|-----|
+| `evaluate_matlab_code` | Executa código MATLAB |
+| `run_matlab_script` | Executa script .m |
+| `check_matlab_code` | Analisa código |
+
 ## Workflow
 
 ### Passo 1: Variaveis iniciais
