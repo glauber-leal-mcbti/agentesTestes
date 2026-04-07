@@ -1,0 +1,319 @@
+---
+name: create-harness-mdl
+description: "Creates a test harness in .mdl format from a .slx model and a provided requirement. Uses a hybrid approach: MATLAB API for creation and simulation, direct Read/Grep/Edit on the .mdl for inspection and content configuration (Test Sequence steps, symbols, block cleanup). Use this skill whenever the user mentions: 'create harness mdl', 'harness in mdl', 'test harness mdl format', or any reference to creating harnesses saved as .mdl."
+---
+
+# Create Test Harness in .mdl Format
+
+Hybrid approach:
+- **MATLAB API** → harness creation, Output symbol addition, simulation
+- **Read/Grep/Edit on .mdl** → inspection of generated structure, residual cleanup, step action editing
+
+## Prerequisites
+- MATLAB R2025a or higher installed
+- Simulink Test Toolbox installed
+- matlab-mcp-server configured and connected
+
+## Considerations
+The MATLAB environment and project with paths will already be configured.
+
+## Available MCP Tools
+
+| Tool | Usage |
+|------|-------|
+| `evaluate_matlab_code` | Executes MATLAB code |
+| `run_matlab_script` | Executes a .m script |
+| `check_matlab_code` | Analyzes code |
+
+## Input Variables
+
+Collect from call arguments. Use `AskUserQuestion`:
+
+| Variable | Description |
+|----------|-------------|
+| `{SLX_MODEL}` | Name or full path to the .slx model |
+| `{HARNESS_NAME}` | Harness file name (without extension) |
+| `{DESTINATION_FOLDER}` | Folder to save the .mdl (default: same folder as model) |
+| `{REQUIREMENT}` | Requirement to be tested |
+| `{INPUTS}` | name→value map of model inputs |
+| `{EXPECTED_OUTPUT}` | Name of the output signals to verify |
+
+Automatically complete if `{DESTINATION_FOLDER}` is not provided:
+```matlab
+[DESTINATION_FOLDER, ~, ~] = fileparts(SLX_MODEL);
+```
+
+---
+
+## Step 1 — Load model and inspect ports (API)
+If the project has not been opened, read and execute the `open-matlab-project/SKILL.md` skill using `view`. Pass the following parameters to that skill:
+  - `{MATLAB_VERSION}`
+  - `{PRJ_PATH}`
+
+Use `evaluate_matlab_code` with:
+```matlab
+[~, mdlBase, ~] = fileparts(SLX_MODEL);
+load_system(SLX_MODEL);
+
+inports  = find_system(mdlBase, 'SearchDepth', 1, 'BlockType', 'Inport');
+outports = find_system(mdlBase, 'SearchDepth', 1, 'BlockType', 'Outport');
+fprintf('Inports:\n');  disp(inports);
+fprintf('Outports:\n'); disp(outports);
+```
+
+Verify that `{EXPECTED_OUTPUT}` is in the outports list. If not, report an error and stop.
+
+---
+
+## Step 2 — Create the harness and save as .mdl (API)
+```matlab
+% Remove previous harness if it exists
+try; sltest.harness.delete(mdlBase, HARNESS_NAME); catch; end
+
+% Create harness
+result = sltest.harness.create(mdlBase, ...
+    'Name',               HARNESS_NAME, ...
+    'Description',        REQUIREMENT, ...
+    'Source',             'Test Sequence', ...
+    'SeparateAssessment', true, ...
+    'SaveExternally',     true, ...
+    'HarnessPath',        DESTINATION_FOLDER, ...
+    'LogOutputs',         true);
+
+% Open the harness
+sltest.harness.open(mdlBase, HARNESS_NAME);
+
+% Save IMMEDIATELY as .mdl before any edits
+MDL_PATH = fullfile(DESTINATION_FOLDER, [HARNESS_NAME '.mdl']);
+save_system(HARNESS_NAME, MDL_PATH);
+fprintf('Harness saved as .mdl: %s\n', MDL_PATH);
+```
+
+---
+
+## Step 3 — Inspect the generated .mdl (Read/Grep)
+
+**Without using MATLAB**, use Read and Grep on the `.mdl` file to extract:
+
+### 3.1 — List OPC parts of the file
+Grep for `__MWOPC_PART_BEGIN__` to see all embedded XMLs.
+
+### 3.2 — Identify auto-generated symbols in the Test Sequence
+Grep for `BlockType="SubSystem" Name="Test Sequence"` to find the block.
+Then read the corresponding `system_NNN.xml`.
+
+### 3.3 — List From/Goto blocks in the harness root
+Grep for `BlockType="From"` in the harness `system_root.xml` to inventory
+all existing Goto tags — this allows identifying which ones are residual
+after deleting unused Input symbols.
+
+### 3.4 — Read current step actions in Stateflow
+Grep for `<P Name="Actions">` or `<act>` to locate the step contents.
+Identify the encoding pattern (XML entities, CDATA, plain text).
+
+> **Execution note:** If Stateflow is in binary/opaque format in the .mdl,
+> use the API to configure the steps (Step 4-API) and then re-save as .mdl.
+> Document which section was edited via API vs. via text.
+
+---
+
+## Step 4 — Configure Test Sequence (API + Read validation)
+
+### 4a — Configure Run step (API)
+Configure the Run step according to the requirement and the expected `{INPUTS}`.
+Use `evaluate_matlab_code` with:
+```matlab
+tsBlock = [HARNESS_NAME '/Test Sequence'];
+
+% Build action string from provided INPUTS
+actionStr = ['%% Configure inputs according to requirement' newline];
+% For each name=value pair in INPUTS:
+%   if type is uint8:  actionStr += 'name = uint8(value);'
+%   otherwise:         actionStr += 'name = value;'
+
+sltest.testsequence.editStep(tsBlock, 'Run', 'Action', actionStr);
+```
+
+### 4b — Remove unused Input symbols (API + .mdl cleanup)
+Use `evaluate_matlab_code` with:
+```matlab
+% Remove Input symbol (vout) from Test Sequence
+allSyms = sltest.testsequence.findSymbol(tsBlock);
+for i = 1:length(allSyms)
+    sym = sltest.testsequence.readSymbol(tsBlock, allSyms{i});
+    if strcmp(sym.Scope, 'Input')
+        sltest.testsequence.deleteSymbol(tsBlock, allSyms{i});
+        fprintf('Input symbol removed from TS: %s\n', allSyms{i});
+    end
+end
+```
+
+**Immediately after each deleteSymbol**, save the .mdl and use Grep to
+find `From` blocks with tag `*_S` that became residual:
+```matlab
+save_system(HARNESS_NAME, MDL_PATH);
+```
+
+Grep for `BlockType="From"` in the saved .mdl and filter for `*_S` tags.
+For each residual block found:
+```matlab
+delete_block([HARNESS_NAME '/' RESIDUAL_BLOCK_NAME]);
+```
+
+---
+
+## Step 5 — Configure Test Assessment (API + Read/Edit)
+
+### 5a — Add Output symbols (API)
+
+Use `evaluate_matlab_code` with:
+```matlab
+taBlock = [HARNESS_NAME '/Test Assessment Block'];
+
+sltest.testsequence.addSymbol(taBlock, 'result', 'Data', 'Output');
+sltest.testsequence.addSymbol(taBlock, 'flag',   'Data', 'Output');
+sltest.testsequence.editSymbol(taBlock, 'result', 'DataType', 'boolean');
+sltest.testsequence.editSymbol(taBlock, 'flag',   'DataType', 'boolean');
+```
+For the flag and result signals leaving the test assessment, add a connection to a Terminator block and name the signals with their respective names.
+
+### 5b — Configure steps (API)
+
+Discover the step structure:
+Use `evaluate_matlab_code` with:
+```matlab
+taSteps = sltest.testsequence.findStep(taBlock);
+for i = 1:length(taSteps)
+    st = sltest.testsequence.readStep(taBlock, taSteps{i});
+    fprintf('%s | IsWhenSubStep=%d\n', st.Name, st.IsWhenSubStep);
+    if st.IsWhenSubStep; fprintf('  WhenCondition: %s\n', st.WhenCondition); end
+end
+```
+
+Configure the verification step according to the requirement description and the test plan. Use the following example to understand how to modify the Test Assessment block to add verification conditions.
+
+Example:
+Configure verification step (otherwise — last child, no WhenCondition):
+```matlab
+% Calculate limits from EXPECTED_VALUE and TOLERANCE_PCT
+vMin = EXPECTED_VALUE * (1 - TOLERANCE_PCT/100);
+vMax = EXPECTED_VALUE * (1 + TOLERANCE_PCT/100);
+
+sltest.testsequence.editStep(taBlock, 'Run.step_1_2', 'Action', ...
+    sprintf(['%%%% Verify requirement: %s ~ %.4g V (+-%.0f%%)' newline ...
+             'flag = true;' newline ...
+             'result = boolean((%s >= %.6g) && (%s <= %.6g));'], ...
+             EXPECTED_OUTPUT, EXPECTED_VALUE, TOLERANCE_PCT, ...
+             EXPECTED_OUTPUT, vMin, EXPECTED_OUTPUT, vMax));
+```
+
+> **Critical rule:** The last `step_1_N` of a when-decomposition never accepts
+> `WhenCondition` — it is implicitly the "otherwise" branch. Never attempt
+> to define `WhenCondition` on it.
+
+---
+
+## Step 6 — Save final .mdl and verify via Read (API + Read/Grep)
+```matlab
+save_system(HARNESS_NAME, MDL_PATH);
+```
+
+Verify the following conditions in the saved .mdl (Read/Grep):
+
+| Check | Grep pattern | Expected |
+|-------|-------------|----------|
+| Output symbols exist | `result.*Output\|flag.*Output` | matches |
+| Run step configured | input value (e.g., `pwm_in1 = 5`) | present |
+| step_1_2 configured | min value (e.g., `319.2`) | present |
+| No residual From blocks | `vout.*_S` | 0 matches |
+
+---
+
+## Step 7 — Simulate and validate compilation (API)
+```matlab
+try
+    sim(HARNESS_NAME, 'StopTime', num2str(STABILIZATION_TIME * 2));
+    fprintf('Simulation OK.\n');
+catch ME
+    fprintf('Compilation ERROR: %s\n', ME.message);
+    % Attempt diagnosis: check for unresolved symbols
+    % Fix and retry (max 2 attempts)
+end
+```
+
+**Expected and acceptable warnings:**
+- `'pwm_in1' is defined, but never used in the Test Sequence block` — normal, these are
+  Input symbols in the Test Assessment that do not need to be referenced in actions.
+
+**Errors that require correction:**
+- `unresolved symbols` → local variable used in a step without being declared as a symbol
+- `compilation failures` → Data Dictionary not present in path
+- `Chart has unresolved symbols` → symbol used in action but not declared
+
+---
+
+## Step 8 — Return
+
+Report to the user:
+```
+Harness created: {MDL_PATH}
+Model tested: {SLX_MODEL}
+Requirement: {REQUIREMENT}
+
+Test Sequence — Run:
+    {INPUTS formatted}
+
+Test Assessment — step_1_1 (t < {STABILIZATION_TIME}s):
+    flag = false; result = false;
+
+Test Assessment — step_1_2 (otherwise):
+    flag = true;
+    result = ({EXPECTED_OUTPUT} ∈ [{vMin:.4g}, {vMax:.4g}]);
+
+Simulation status: OK / ERROR
+```
+
+---
+
+## Reference: .mdl OPC Text Package Anatomy
+MWOPC_PART_BEGIN /simulink/systems/system_root.xml
+    → harness root blocks: Test Sequence, Test Assessment,
+    Model Reference, From/Goto, Conversion Subsystems
+
+    MWOPC_PART_BEGIN /simulink/systems/system_NNN.xml
+    → interior of each SubSystem (including Test Seq / Assessment)
+
+    MWOPC_PART_BEGIN /simulink/blockdiagram.xml
+    → model metadata: UUID, DataDictionary, SimulationMode
+
+    MWOPC_PART_BEGIN /simulink/graphicalInterface.json
+    → root inport/outport names and signal names
+
+    MWOPC_PART_BEGIN /simulink/bdmxdata/*.mxarray BASE64
+    → binary data (Simscape, etc.) — DO NOT edit via text
+
+### What is safe to edit directly in the .mdl
+
+| Element | Location | Safe to edit |
+|---------|----------|--------------|
+| Block position | `system_NNN.xml` → `<P Name="Position">` | Yes |
+| Numeric parameters | `system_NNN.xml` → `<P Name="Value">` | Yes |
+| Block name | `system_NNN.xml` → `Name="..."` in `<Block>` | With care (update refs) |
+| SIDHighWatermark | `system_root.xml` | Yes, when adding blocks |
+| Step actions (Stateflow) | Via API — not directly in XML | API only |
+| TS/TA symbols | Via API — not directly in XML | API only |
+| Lines (connections) | `system_NNN.xml` → `<Line>` | Yes |
+| Atomic blocks | `system_NNN.xml` → `<Block>` | Yes |
+
+---
+
+## Error Handling
+
+| Error | Diagnosis | Action |
+|-------|-----------|--------|
+| `Unable to find data dictionary` | SLDD not in path | Search for .sldd in project tree with recursive `find_system` or `dir` and add to path |
+| `unresolved symbols` in Assessment | Variable used in action without being declared as symbol | Use literal inline values instead of local variables |
+| `WhenCondition not allowed in step` | Attempting to set condition on last child of when-decomp | Remove the `WhenCondition` parameter from the `editStep` call |
+| Residual From after `deleteSymbol` | Tag `*_S` present in system_root | `delete_block` + re-save .mdl |
+| Harness already exists | `sltest.harness.delete` throws error | Use `try/catch` on delete |
+| Model does not compile | External dependencies | Check full path and Data Dictionary |

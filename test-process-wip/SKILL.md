@@ -1,0 +1,134 @@
+---
+name: test-process-wip
+description: "Manages the complete test creation process in Simulink — not yet finalized (Work in Progress). Use this skill whenever the user mentions: 'complete test process', 'generate complete tests', or any reference to creating a complete test environment."
+---
+
+## Prerequisites
+- MATLAB installed with a valid license
+- matlab-mcp-server installed
+
+## Available MCP Tools
+
+| Tool | Usage |
+|------|-------|
+| `evaluate_matlab_code` | Executes MATLAB code |
+| `run_matlab_script` | Executes a .m script |
+| `check_matlab_code` | Analyzes code |
+
+## Requirements Structure
+Requirements are structured as follows:
+
+| Requirement Type | Abbreviation | Meaning |
+|------------------|--------------|---------|
+| Functional | FUN | What the system must do |
+| Container | CONT | Group of functional requirements |
+| Informational | INF | Information about the system |
+
+Only FUN requirements are implemented in the harness and test manager for validation purposes. CONT requirements are used to create partitioning for better organization by functional affinity. Informational requirements are used only to provide information and are not implemented.
+
+Requirements are named with the following structure:
+[System]-[Subsystem]-[Type]-[Number]
+
+Where:
+ - System: the system it verifies
+ - Subsystem: the subsystem it verifies
+ - Type: FUN, CONT, INF
+ - Number: requirement number
+
+## Workflow
+
+### Step 1: Configuration variables
+
+Use `AskUserQuestion` to collect interactively, or retrieve the data from the skill that triggered this execution.
+
+  - MATLAB version → `{MATLAB_VERSION}`
+  - Project file path (.prj) → `{PRJ_PATH}`
+  - Requirements file name (.slreqx) → `{REQUIREMENTS_FILE}`
+  - Test plan file name → `{TEST_PLAN_FILE}`
+  - Model where the harness will be created → `{TEST_MODEL}`
+
+### Step 2: Configure MATLAB environment
+
+Read and execute the `open-matlab-project/SKILL.md` skill using `view`. Pass the following parameters to that skill:
+  - `{MATLAB_VERSION}`
+  - `{PRJ_PATH}`
+
+After execution, the following variables will be available:
+- `{MATLAB_VERSION}`
+- `{PRJ_PATH}`
+
+### Step 3: Read requirements
+
+Read and execute the `verify-matlab-requirements/SKILL.md` skill using `view`. Pass the following parameters to that skill:
+  - MATLAB version → `{MATLAB_VERSION}`
+  - Project file path (.prj) → `{PRJ_PATH}`
+  - Requirements file name (.slreqx) → `{REQUIREMENTS_FILE}`
+
+Save the requirements information, such as names and description. That will be use in the next steps.
+
+### Step 4: Read test plan
+
+Read the file `{TEST_PLAN_FILE}` and associate the test plan to each identified requirement.
+
+### Step 5: Generate test harnesses (WIP)
+
+Test harnesses must be saved in the most appropriate directory available in the project architecture, according to the test scope and the model under test. Save this path in `{TEST_FOLDER}`.
+
+Launch one agent per requirement to be tested.
+
+Use the `create-harness-mdl` skill to generate the test harness that verifies the requirement. Based on the requirement and the test plan, generate the necessary inputs `{INPUTS}` and the expected model output values for the test to be considered passing `{EXPECTED_OUTPUTS}`. Execute the `create-harness-mdl` skill passing the following values:
+  - .slx model → `{TEST_MODEL}`
+  - Harness name → requirement number plus the model name `{TEST_MODEL}`
+  - Destination folder → `{TEST_FOLDER}`
+  - Requirement to be tested
+  - Inputs → `{INPUTS}`
+  - Expected outputs → `{EXPECTED_OUTPUTS}`
+
+Save the names of the generated harnesses for the next step.
+
+### Step 6: Create test structure
+
+Name the Test Manager file after the model name plus "Manager" at the end: `{TEST_MODEL}` + "Manager" → `{TEST_MANAGER_NAME}`
+Name the Test Suite after the CONT requirement that encompasses the implemented requirement `{REQUIREMENT_TO_IMPLEMENT}` → `{TEST_SUITE_NAME}`
+Name the Test Case after the FUN requirement it verifies → `{TEST_CASE_NAME}`
+
+Create or identify the Test Manager file. Read the project structure to save this file in the location consistent with the tests, such as a folder named after the model's test scope. This is not a rule for all projects. To accomplish this, read and execute the `create-test-manager/SKILL.md` skill using `view`. Pass the following parameters to that skill:
+1. Test Manager name → `{TEST_MANAGER_NAME}`
+2. Test Manager file directory → `{TEST_MANAGER_DIRECTORY}`
+
+Read and execute the `create-test-suite/SKILL.md` skill using `view`. Pass the following parameters to that skill:
+1. Test Manager name → `{TEST_MANAGER_NAME}`
+2. Test Suite name → `{TEST_SUITE_NAME}`
+
+Read and execute the `create-test-case/SKILL.md` skill using `view`. Pass the following parameters to that skill:
+1. Test Manager name → `{TEST_MANAGER_NAME}`
+2. Test Suite name → `{TEST_SUITE_NAME}`
+3. Test Case name → `{TEST_CASE_NAME}`
+4. Model under test → `{TEST_MODEL}`
+5. Harness under test → `{HARNESS_NAME}`
+6. Pass a description of how the test was implemented according to the instructions in `{TEST_PLAN_FILE}`. Consider the descriptions of related CONT requirements.
+
+Read and execute the `create-test-assessment/SKILL.md` skill using `view`. Pass the following parameters to that skill:
+1. Test Manager name → `{TEST_MANAGER_NAME}`
+2. Test Suite name → `{TEST_SUITE_NAME}`
+3. Test Case name → `{TEST_CASE_NAME}`
+4. Test Assessment name → `{TEST_ASSESSMENT_NAME}`
+5. Test Assessment level (MIL or HIL) → `{ASSESSMENT_LEVEL}`
+6. Test Assessment type (verification) → `{ASSESSMENT_TYPE}`
+
+### Step 7: Finalize MATLAB
+
+Close MATLAB. Use `evaluate_matlab_code` with:
+```matlab
+exit;
+```
+
+Instruct the user to update the test assessment variables, pointing out the structure that was created.
+
+## Error Handling
+
+| Error | Action |
+|-------|--------|
+| Non-existent Test Manager | Notify the skill caller that the file `{TEST_MANAGER_NAME}` does not exist in the project context |
+| Non-existent Test Suite | Notify the skill caller that the instance `{TEST_SUITE_NAME}` does not exist in the project context |
+| Existing Test Case | Notify the skill caller that the Test Case already exists and can be used |

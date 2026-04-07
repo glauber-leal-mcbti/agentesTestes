@@ -1,165 +1,165 @@
 ---
-name: rodar-teste-speedgoat
-description: "Executa os testes presentes em um arquivo .mldatx do Simulink Test Manager, para um target speedgoat disponibilizado pelo usuário. Use este skill sempre que o usuario mencionar: 'rodar teste speedgoat', 'iniciar teste speedgoat', ou qualquer referencia a executar testes em uma speedgoat."
+name: run-speedgoat-test
+description: "Executes tests from a Simulink Test Manager .mldatx file on a Speedgoat target provided by the user. Use this skill whenever the user mentions: 'run speedgoat test', 'start speedgoat test', or any reference to running tests on a Speedgoat."
 ---
-## Pre-requisitos
-- MATLAB instalado com licença valida
-- matlab-mcp-server instalado
-- Speedgoat Support Package instalado
-- matlab-mcp-server configurado e conectado
 
-## Ferramentas MCP Disponíveis
+## Prerequisites
+- MATLAB installed with a valid license
+- matlab-mcp-server configured and connected
 
-| Ferramenta | Uso |
-|------------|-----|
-| `evaluate_matlab_code` | Executa código MATLAB |
-| `run_matlab_script` | Executa script .m |
-| `check_matlab_code` | Analisa código |
+## Available MCP Tools
+
+| Tool | Usage |
+|------|-------|
+| `evaluate_matlab_code` | Executes MATLAB code |
+| `run_matlab_script` | Executes a .m script |
+| `check_matlab_code` | Analyzes code |
 
 ## Workflow
 
-### Passo 1: Carregar arquivo de configuração
+### Step 1: Load configuration file
 
-Use `ask_user_input_v0` para coletar de forma interativa.
+Use `AskUserQuestion` to collect interactively.
 
-1. Pergunte ao usuário: "Informe o caminho do arquivo de configurações `.txt`"
-2. Salve em `{CONFIG_PATH}`
-3. Extraia o diretório de `{CONFIG_PATH}` e salve em `{PROJECT_DIR}`
-   - Exemplo: se `{CONFIG_PATH}` = `/home/user/projeto/config.txt`
-   - Então `{PROJECT_DIR}` = `/home/user/projeto/`
-4. Pergunte ao usuário: Caminho repositório controlador → salve em `{CONTROL_PATH}`
-5. Pergunte ao usuário: Nome do autor que executa os testes → salve em `{Test_File_Author}`
+1. Ask the user: "Enter the path to the configuration file `.txt`"
+2. Save in `{CONFIG_PATH}`
+3. Extract the directory from `{CONFIG_PATH}` and save in `{PROJECT_DIR}`
+   - Example: if `{CONFIG_PATH}` = `/home/user/project/config.txt`
+   - Then `{PROJECT_DIR}` = `/home/user/project/`
+4. Ask the user: Controller repository path → save in `{CONTROL_PATH}`
+5. Ask the user: Name of the author running the tests → save in `{TEST_FILE_AUTHOR}`
 
-4. Utilize `view` em `{CONFIG_PATH}` e extraia os dados:
-   - Versão do MATLAB → `{VERSAO_MATLAB}`
-   - Nome do arquivo de projeto (.prj) → `{NOME_PRJ}`
-   - Nome do arquivo Simulink Test Manager (.mldatx) → `{TEST_MANAGER}`
-   - Nome do target Speedgoat → `{NOME_SPEEDGOAT}`
-   - Título Relatórios → `{Test_Specification_Details}`
+6. Use `view` on `{CONFIG_PATH}` and extract the following data:
+   - MATLAB version → `{MATLAB_VERSION}`
+   - Project file name (.prj) → `{PRJ_NAME}`
+   - Simulink Test Manager file name (.mldatx) → `{TEST_MANAGER}`
+   - Speedgoat target name → `{SPEEDGOAT_NAME}`
+   - Report title → `{TEST_SPECIFICATION_DETAILS}`
 
-5. Construa os caminhos completos:
-   - `{CAMINHO_PRJ}` = `{PROJECT_DIR}` + `{NOME_PRJ}`
+7. Build the full paths:
+   - `{PRJ_PATH}` = `{PROJECT_DIR}` + `{PRJ_NAME}`
 
-### Passo 2: Configuração ambiente matlab
+### Step 2: Configure MATLAB environment
 
-Leia e execute a skill `abrir-projeto-matlab/SKILL.md` usando `view`. Passe como parâmetro para essa skill:
-    - `{VERSAO_MATLAB}`
-    - `{CAMINHO_PRJ}`
+Read and execute the `open-matlab-project/SKILL.md` skill using `view`. Pass the following parameters to that skill:
+  - `{MATLAB_VERSION}`
+  - `{PRJ_PATH}`
 
-Após execução, as variáveis estarão disponíveis:
-- `{VERSAO_MATLAB}`
-- `{CAMINHO_PRJ}`
+After execution, the following variables will be available:
+- `{MATLAB_VERSION}`
+- `{PRJ_PATH}`
 
-O contexto do projeto já estará configurado no MATLAB.
+The project context will already be configured in MATLAB.
 
-## Passo 3: Conectar na Speedgoat
+### Step 3: Connect to Speedgoat
 
-Use `evaluate_matlab_code` com:
+Use `evaluate_matlab_code` with:
 ```matlab
-    tg=slrealtime;
-    tg.connect
+tg = slrealtime;
+tg.connect
 ```
-Para realizar a conexão com a speedgoat. Verifique se a conexão foi realizada se o retorno da função abixo for 1:
-Use `evaluate_matlab_code` com:
+To establish the connection with the Speedgoat. Verify the connection was successful if the following function returns 1:
+Use `evaluate_matlab_code` with:
 ```matlab
-    disp(tg.isConnected);
+disp(tg.isConnected);
 ```
 
-Se a conexão não for bem sucedida, tente novamente três vezes, e retorne ao usuário. Caso não esteja conectado, finalizar execução.
+If the connection is unsuccessful, retry three times, then report back to the user. If still not connected, stop execution.
 
-## Passo 4: Fazer upload código controlador
-Faça upload do código do controlador no hardware especificado no arquivo disponibilizado. Primeiro navegue até o repositório `{CONTROL_PATH}` e então faça o upload:
+### Step 4: Upload controller code
+
+Upload the controller code to the specified hardware. First navigate to the repository `{CONTROL_PATH}` and then perform the upload:
 Execute via bash_tool:
 ```bash
 cd {CONTROL_PATH}
 pio run --target upload
 ```
 
-Verifique se o upload foi executado. Se não termine a operação.
+Verify that the upload was successful. If not, stop the operation.
 
-### Passo 5: Carregar e analisar arquivo de testes
+### Step 5: Load and analyze test file
 
-Use `evaluate_matlab_code` com:
+Use `evaluate_matlab_code` with:
 ```matlab
-% Carregar Test Manager
+% Load Test Manager
 tf = sltest.testmanager.load('{TEST_MANAGER}');
 
-% Obter informações dos testes
+% Get test information
 testSuites = tf.getTestSuites;
 numSuites = length(testSuites);
 
-% Contar total de testes
-totalTestes = 0;
-infoTestes = {};
+% Count total tests
+totalTests = 0;
+testInfo = {};
 
 for i = 1:numSuites
     suite = testSuites(i);
     testCases = suite.getTestCases;
     numCases = length(testCases);
-    totalTestes = totalTestes + numCases;
-    
+    totalTests = totalTests + numCases;
+
     for j = 1:numCases
         tc = testCases(j);
-        infoTestes{end+1} = struct('suite', suite.Name, 'teste', tc.Name);
+        testInfo{end+1} = struct('suite', suite.Name, 'test', tc.Name);
     end
 end
 
 disp(['TOTAL_SUITES: ', num2str(numSuites)]);
-disp(['TOTAL_TESTES: ', num2str(totalTestes)]);
+disp(['TOTAL_TESTS: ', num2str(totalTests)]);
 ```
 
-Informe ao usuário quantos suites e testes foram encontrados.
+Inform the user how many suites and tests were found.
 
-### Passo 6: Configurações Específicas
-Realize as seguintes configurações a seguir. A ideia é pegar qual o modelo sendo executado no teste, e mudar um parmetro no mesmo
-Use `evaluate_matlab_code` com:
+### Step 6: Specific configurations
+Perform the following configurations. The goal is to identify which model is being run in the test and change a parameter in it.
+Use `evaluate_matlab_code` with:
 ```matlab
 open_system("SystemHIL_Simscape")
-set_param("SystemHIL_Simscape/IHM/setpointManual", "Value","0");
+set_param("SystemHIL_Simscape/IHM/setpointManual", "Value", "0");
 ```
 
-### Passo 7: Executar testes
+### Step 7: Run tests
 
-**Importante**: Execute os testes em blocos menores para evitar timeout.
+**Important**: Execute tests in smaller blocks to avoid timeout.
 
-#### 7.1: Executar testes e coletar resultados
+#### 7.1: Run tests and collect results
 
-Use `evaluate_matlab_code` com:
+Use `evaluate_matlab_code` with:
 ```matlab
-% Executar todos os testes
+% Run all tests
 testSuites = tf.getTestSuites;
-resultados = {};
+results = {};
 
 for i = 1:length(testSuites)
     suite = testSuites(i);
     suiteName = suite.Name;
     testCases = suite.getTestCases;
-    
+
     for j = 1:length(testCases)
         tc = testCases(j);
         tcName = tc.Name;
-        
+
         try
             result = tc.run;
             outcome = char(result.Outcome);
-            resultados{end+1} = {suiteName, tcName, outcome, ''};
-            disp(['TESTE: ', tcName, ' -> ', outcome]);
+            results{end+1} = {suiteName, tcName, outcome, ''};
+            disp(['TEST: ', tcName, ' -> ', outcome]);
         catch ME
-            resultados{end+1} = {suiteName, tcName, 'ERRO', ME.message};
-            disp(['TESTE: ', tcName, ' -> ERRO: ', ME.message]);
+            results{end+1} = {suiteName, tcName, 'ERROR', ME.message};
+            disp(['TEST: ', tcName, ' -> ERROR: ', ME.message]);
         end
     end
 end
 
-% Salvar resultados no workspace para próximo passo
-disp('TESTES_CONCLUIDOS');
+% Save results in workspace for next step
+disp('TESTS_COMPLETED');
 ```
 
-#### 7.2: Gerar relatório
+#### 7.2: Generate report
 
-Use `evaluate_matlab_code` com:
+Use `evaluate_matlab_code` with:
 ```matlab
-% Coletar test cases para o relatório
+% Collect test cases for the report
 testSuites = tf.getTestSuites;
 tcases = [];
 for i = 1:length(testSuites)
@@ -168,99 +168,98 @@ for i = 1:length(testSuites)
     tcases = [tcases, tcs];
 end
 
-% Gerar relatório
-sltest.testmanager.TestSpecReport(tcases, 'testReport.pdf',...
-    'Author', '{Test_File_Author}',...
-    'Title', '{Test_Specification_Details}',...
-    'IncludeCustomCriteria', false,...
-    'LaunchReport', true,...
-    'IncludeLoggedSignals', true,...
+% Generate report
+sltest.testmanager.TestSpecReport(tcases, 'testReport.pdf', ...
+    'Author', '{TEST_FILE_AUTHOR}', ...
+    'Title', '{TEST_SPECIFICATION_DETAILS}', ...
+    'IncludeCustomCriteria', false, ...
+    'LaunchReport', true, ...
+    'IncludeLoggedSignals', true, ...
     'IncludeTestFileOptions', true);
 
-disp('RELATORIO_GERADO');
+disp('REPORT_GENERATED');
 ```
 
-#### 7.3: Exibir sumário
+#### 7.3: Display summary
 
-Use `evaluate_matlab_code` com:
+Use `evaluate_matlab_code` with:
 ```matlab
-% Calcular sumário
-passaram = 0; falharam = 0; erros = 0;
-for k = 1:length(resultados)
-    r = resultados{k};
+% Calculate summary
+passed = 0; failed = 0; errors = 0;
+for k = 1:length(results)
+    r = results{k};
     if strcmp(r{3}, 'Passed')
-        passaram = passaram + 1;
+        passed = passed + 1;
     elseif strcmp(r{3}, 'Failed')
-        falharam = falharam + 1;
+        failed = failed + 1;
     else
-        erros = erros + 1;
+        errors = errors + 1;
     end
 end
 
-disp('=== SUMARIO ===');
-disp(['Passaram: ', num2str(passaram)]);
-disp(['Falharam: ', num2str(falharam)]);
-disp(['Erros: ', num2str(erros)]);
+disp('=== SUMMARY ===');
+disp(['Passed: ', num2str(passed)]);
+disp(['Failed: ', num2str(failed)]);
+disp(['Errors: ', num2str(errors)]);
 ```
-### Passo 8: Apresentar resultados
 
-Apresente ao usuário:
-- Total de testes executados
-- Quantos passaram
-- Quantos falharam
-- Quantos tiveram erro de execução
-- Lista detalhada de falhas/erros (se houver)
+### Step 8: Present results
 
-Utilize o modelo:
-Exiba o sumário no formato:
+Present the following to the user:
+- Total tests executed
+- How many passed
+- How many failed
+- How many had execution errors
+- Detailed list of failures/errors (if any)
+
+Display the summary in the following format:
 ```
 ┌──────────────────────┬────────────────────────────────┐
-│        Item          │           Resultado            │
+│        Item          │            Result              │
 ├──────────────────────┼────────────────────────────────┤
-│ Projeto              │ {NOME_PRJ}                     │
+│ Project              │ {PRJ_NAME}                     │
 ├──────────────────────┼────────────────────────────────┤
-│ Total de testes      │ {TOTAL_TESTES}                 │
+│ Total tests          │ {TOTAL_TESTS}                  │
 ├──────────────────────┼────────────────────────────────┤
-│ Passaram             │ {PASSARAM} ✓                   │
+│ Passed               │ {PASSED} ✓                     │
 ├──────────────────────┼────────────────────────────────┤
-│ Falharam             │ {FALHARAM} ✗                   │
+│ Failed               │ {FAILED} ✗                     │
 ├──────────────────────┼────────────────────────────────┤
-│ Erros de execução    │ {ERROS}                        │
+│ Execution errors     │ {ERRORS}                       │
 ├──────────────────────┼────────────────────────────────┤
-│ Relatório            │ {CAMINHO_RELATORIO}            │
+│ Report               │ {REPORT_PATH}                  │
 └──────────────────────┴────────────────────────────────┘
 ```
 
-Se houver testes que falharam, liste-os abaixo:
+If there are failed tests, list them below:
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   Testes com Falha                      │
+│                     Failed Tests                        │
 ├──────────────────────┬──────────────────────────────────┤
-│ Nome do Teste        │ Motivo                           │
+│ Test Name            │ Reason                           │
 ├──────────────────────┼──────────────────────────────────┤
-│ {NOME_TESTE_1}       │ {MOTIVO_1}                       │
+│ {TEST_NAME_1}        │ {REASON_1}                       │
 ├──────────────────────┼──────────────────────────────────┤
-│ {NOME_TESTE_2}       │ {MOTIVO_2}                       │
+│ {TEST_NAME_2}        │ {REASON_2}                       │
 └──────────────────────┴──────────────────────────────────┘
 ```
 
-
-### Passo 9: Finalizar MATLAB
-Finalize as operações do MATLAB, fechando a conexão com a speedgoat e fechando o TestManager.
-Use `evaluate_matlab_code` com:
+### Step 9: Finalize MATLAB
+Finalize MATLAB operations, closing the Speedgoat connection and the Test Manager.
+Use `evaluate_matlab_code` with:
 ```matlab
-tg.diconnect
+tg.disconnect
 tf.saveToFile();
 tf.close();
 exit;
 ```
-Feche o MATLAB.
+Close MATLAB.
 
 ## Error Handling
 
-| Erro | Ação |
-|------|------|
-| Toolbox não instalado | Informar qual está faltando |
-| Speedgoat não conecta | Verificar IP/credenciais |
-| Arquivo .mldatx não encontrado | Verificar caminho |
-| Teste com erro | Registrar e continuar |
+| Error | Action |
+|-------|--------|
+| Toolbox not installed | Report which one is missing |
+| Speedgoat won't connect | Check IP/credentials |
+| .mldatx file not found | Verify path |
+| Test with error | Log and continue |

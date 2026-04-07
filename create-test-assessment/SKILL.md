@@ -1,0 +1,75 @@
+---
+name: create-test-assessment
+description: "Creates a test assessment for an adopted Test Manager, Test Suite, and Test Case. The assessment is created from a template copy. Use this skill whenever the user mentions: 'create test assessment', 'new test assessment', or any reference to creating test assessments."
+---
+
+## Prerequisites
+- MATLAB installed with a valid license
+- matlab-mcp-server configured and connected
+
+## Available MCP Tools
+
+| Tool | Usage |
+|------|-------|
+| `evaluate_matlab_code` | Executes MATLAB code |
+| `run_matlab_script` | Executes a .m script |
+| `check_matlab_code` | Analyzes code |
+
+## Template
+
+The template `{Assessment_template}` located at `assets/Assessment_template.mldatx` (relative to this skill). Never edit the template.
+
+## Workflow
+
+### Step 1: Configuration variables
+
+Use `AskUserQuestion` to collect interactively, or retrieve the data from the skill that triggered this execution.
+
+1. Test Manager name → `{TEST_MANAGER_NAME}`
+2. Test Suite name → `{TEST_SUITE_NAME}`
+3. Test Case name → `{TEST_CASE_NAME}`
+4. Test Assessment name → `{TEST_ASSESSMENT_NAME}`
+5. Test Assessment level (MIL or HIL) → `{ASSESSMENT_LEVEL}`
+6. Test Assessment type (verification) → `{ASSESSMENT_TYPE}`
+
+Assume the project is already configured in the MATLAB environment.
+
+### Step 2: Load main Test Manager and Suite
+
+Load the Test Manager file. Use `evaluate_matlab_code` with:
+```matlab
+tf = sltest.testmanager.load('{TEST_MANAGER_NAME}');
+ts = getTestSuiteByName(tf, '{TEST_SUITE_NAME}');
+tc = getTestCaseByName(ts, '{TEST_CASE_NAME}');
+```
+If MATLAB reports that the Test Manager does not exist, raise the error | Non-existent Test Manager |
+If MATLAB reports that the Test Suite does not exist, raise the error | Non-existent Test Suite |
+If MATLAB reports that the Test Case does not exist, raise the error | Non-existent Test Case |
+
+### Step 3: Copy Assessment template WORKING IN PROGRESS $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+Copy the Assessment template from the template file `{Assessment_template}`, indicated at the beginning of this skill. Use `evaluate_matlab_code` with:
+```matlab
+tftemp = sltest.testmanager.load('{Assessment_template}');
+tstemp = getTestSuiteByName(tftemp, '{ASSESSMENT_LEVEL}');
+tctemp = getTestCaseByName(tstemp, '{ASSESSMENT_TYPE}');
+asstemp = getAssessments(tctemp);
+ass = addAssessment(tc, asstemp);
+```
+If MATLAB reports that the test case already exists, raise the error | Existing Test Case |
+
+### Step 4: Close the Test Manager
+
+Close the Test Manager file. Use `evaluate_matlab_code` with:
+```matlab
+tf.saveToFile();
+tf.close();
+```
+
+## Error Handling
+
+| Error | Action |
+|-------|--------|
+| Non-existent Test Manager | Notify the skill caller that the file `{TEST_MANAGER_NAME}` does not exist in the project context |
+| Non-existent Test Suite | Notify the skill caller that the instance `{TEST_SUITE_NAME}` does not exist in the project context |
+| Non-existent Test Case | Notify the skill caller that the instance `{TEST_CASE_NAME}` does not exist in the project context |
