@@ -54,7 +54,7 @@ If MATLAB reports that the test case already exists, raise the error | Existing 
 
 Set the test description according to the test plan value, available in `{TEST_DESCRIPTION}`. Use `evaluate_matlab_code` with:
 ```matlab
-setProperty(tc, 'Description', '{TEST_DESCRIPTION}');
+tc.Description = {TEST_DESCRIPTION};
 ```
 
 ### Step 5: Close the Test Manager
