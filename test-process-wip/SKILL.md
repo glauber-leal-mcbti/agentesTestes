@@ -96,7 +96,7 @@ Test harnesses must be saved in the most appropriate directory available in the 
 
 Launch one agent per requirement to be tested.
 
-Use the `create-harness-assertion` skill to generate the test harness that verifies the requirement. Based on the requirement and the test plan, generate the necessary inputs `{INPUTS}` and the expected model output values for the test to be considered passing `{EXPECTED_OUTPUTS}`. Execute the `create-harness-mdl` skill passing the following values:
+Use the `create-harness-mdl` skill to generate the test harness that verifies the requirement. Based on the requirement and the test plan, generate the necessary inputs `{INPUTS}` and the expected model output values for the test to be considered passing `{EXPECTED_OUTPUTS}`. Execute the `create-harness-mdl` skill passing the following values:
   - .slx model → `{TEST_MODEL}`
   - Harness name → requirement number plus the model name `{TEST_MODEL}`
   - Destination folder → `{TEST_FOLDER}`

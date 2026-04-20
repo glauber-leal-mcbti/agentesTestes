@@ -60,6 +60,8 @@ reqSet = slreq.load('{REQUIREMENTS_FILE}');
 requirements = reqSet.find('Type', 'Requirement');
 ```
 
+Save the matlab variable requirements → `{REQQUIREMENTS_SET}`.
+
 If the file is not found, call error | Requiriment file not existis |.
 
 ### Step 4: Describe requirements
@@ -81,7 +83,8 @@ end
 
 ### Step 5: Return
 
-Return to the user or another skill a table with the data of the requirements read during this execution.
+Return to the user or another skill a table with the data of the requirements read during this execution. 
+Return too the matlab variable `{REQQUIREMENTS_SET}`.
 
 Finish by closing the requirements file. Use `evaluate_matlab_code` with:
 ```matlab

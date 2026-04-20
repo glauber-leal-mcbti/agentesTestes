@@ -1,6 +1,6 @@
 ---
 name: create-harness-mdl
-description: "Creates a test harness in .mdl format from a .slx model and a provided requirement. Uses a hybrid approach: MATLAB API for creation and simulation, direct Read/Grep/Edit on the .mdl for inspection and content configuration (Test Sequence steps, symbols, block cleanup). Use this skill whenever the user mentions: 'create harness mdl', 'harness in mdl', 'test harness mdl format', or any reference to creating harnesses saved as .mdl."
+description: "Creates a test harness in .mdl format from a .slx model and a provided requirement. Uses a hybrid approach: MATLAB API for creation and simulation, direct Read/Grep/Edit on the .mdl for inspection and content configuration (Test Sequence steps, symbols, block cleanup). Use this skill whenever the user mentions: 'create harness with assertion'."
 ---
 
 # Create Test Harness in .mdl Format
@@ -113,7 +113,7 @@ result = sltest.harness.create(mdlBase, ...
     'Name',               HARNESS_NAME, ...
     'Description',        REQUIREMENT, ...
     'Source',             'Test Sequence', ...
-    'SeparateAssessment', true, ...
+    'SeparateAssessment', false, ...
     'SaveExternally',     true, ...
     'HarnessPath',        DESTINATION_FOLDER, ...
     'LogOutputs',         true);
@@ -213,7 +213,6 @@ sltest.testsequence.addSymbol(taBlock, 'flag',   'Data', 'Output');
 sltest.testsequence.editSymbol(taBlock, 'result', 'DataType', 'boolean');
 sltest.testsequence.editSymbol(taBlock, 'flag',   'DataType', 'boolean');
 ```
-For the flag and result signals leaving the test assessment, add a connection to a Terminator block and name the signals with their respective names.
 
 ### 5b — Configure steps (API)
 
@@ -229,6 +228,12 @@ end
 ```
 
 Configure the verification step according to the requirement description and the test plan. Use the following example to understand how to modify the Test Assessment block to add verification conditions.
+
+The logic for 'result' must strictly follow these rules:
+- When 'flag' is **false** (stabilization phase): 'result' must **always** be set to `true` unconditionally — no verification is performed yet.
+- When 'flag' is **true** (verification phase): 'result' must receive the outcome of the verification expression assembled by the AI, based on the test plan and the requirement under test (e.g., a range check, equality check, threshold check, etc.).
+
+Never assign a verification expression to 'result' in the step where 'flag' is false.
 
 Example:
 Configure verification step (otherwise — last child, no WhenCondition):
@@ -249,7 +254,51 @@ sltest.testsequence.editStep(taBlock, 'Run.step_1_2', 'Action', ...
 > `WhenCondition` — it is implicitly the "otherwise" branch. Never attempt
 > to define `WhenCondition` on it.
 
----
+### 5c — Configure Models Outputs
+
+For the 'flag' signal leaving the test assessment, add a connection to a Output modelo block and name the signals with their respective names.
+
+For the 'result' signal leaving the test assessment, add a connection to a assertion block and name the signals with their respective names.
+
+Use this code like example:
+```matlab
+% ── flag → Outport ──────────────────────────────────────────────
+flagOutport = [HARNESS_NAME '/flag_AIG'];
+add_block('simulink/Ports & Subsystems/Out1', flagOutport, ...
+    'MakeNameUnique', 'on');
+set_param(flagOutport, 'Name', 'flag_AIG');
+
+add_line(HARNESS_NAME, ...
+    [strrep(taBlock, [HARNESS_NAME '/'], '') '/2'], ...
+    'flag_AIG/1', ...
+    'autorouting', 'on');
+
+flagLine = get_param(flagOutport, 'LineHandles');
+flagLineHandle = flagLine.Inport(1);
+set(flagLineHandle, 'Name',        'flag');
+set(flagLineHandle, 'DataLogging', 'on');  % ← ativa o Log Signal
+
+
+% ── result → Assertion ──────────────────────────────────────────
+assertBlock = [HARNESS_NAME '/Assert_result_AIG'];
+add_block('simulink/Model Verification/Assertion', assertBlock, ...
+    'MakeNameUnique', 'on');
+set_param(assertBlock, 'Name',                 'Assert_result_AIG');
+set_param(assertBlock, 'StopWhenAssertionFail', 'off');
+
+add_line(HARNESS_NAME, ...
+    [strrep(taBlock, [HARNESS_NAME '/'], '') '/1'], ...
+    'Assert_result_AIG/1', ...
+    'autorouting', 'on');
+
+assertLine = get_param(assertBlock, 'LineHandles');
+assertLineHandle = assertLine.Inport(1);
+set(assertLineHandle, 'Name',        'result');
+set(assertLineHandle, 'DataLogging', 'on');  % ← ativa o Log Signal
+
+save_system(HARNESS_NAME, MDL_PATH);
+fprintf('Log Signals ativado para flag e result.\n');
+```
 
 ## Step 6 — Save final .mdl and verify via Read (API + Read/Grep)
 ```matlab
