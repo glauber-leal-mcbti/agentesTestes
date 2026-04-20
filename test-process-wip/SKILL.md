@@ -82,6 +82,7 @@ Read and execute the `verify-matlab-requirements/SKILL.md` skill using `view`. P
   - MATLAB version → `{MATLAB_VERSION}`
   - Project file path (.prj) → `{PRJ_PATH}`
   - Requirements file name (.slreqx) → `{REQUIREMENTS_FILE}`
+Recieve from the skill the matlab variable contained the requirements under execution and save that in → `{REQQUIREMENTS_SET}`.
 
 Save the requirements information, such as names and description. That will be use in the next steps.
 
@@ -95,7 +96,7 @@ Test harnesses must be saved in the most appropriate directory available in the 
 
 Launch one agent per requirement to be tested.
 
-Use the `create-harness-mdl` skill to generate the test harness that verifies the requirement. Based on the requirement and the test plan, generate the necessary inputs `{INPUTS}` and the expected model output values for the test to be considered passing `{EXPECTED_OUTPUTS}`. Execute the `create-harness-mdl` skill passing the following values:
+Use the `create-harness-assertion` skill to generate the test harness that verifies the requirement. Based on the requirement and the test plan, generate the necessary inputs `{INPUTS}` and the expected model output values for the test to be considered passing `{EXPECTED_OUTPUTS}`. Execute the `create-harness-mdl` skill passing the following values:
   - .slx model → `{TEST_MODEL}`
   - Harness name → requirement number plus the model name `{TEST_MODEL}`
   - Destination folder → `{TEST_FOLDER}`
@@ -127,15 +128,15 @@ Read and execute the `create-test-case/SKILL.md` skill using `view`. Pass the fo
 5. Harness under test → `{HARNESS_NAME}`
 6. Pass a description of how the test was implemented according to the instructions in `{TEST_PLAN_FILE}`. Consider the descriptions of related CONT requirements.
 
-Read and execute the `create-test-assessment/SKILL.md` skill using `view`. Pass the following parameters to that skill:
-1. Test Manager name → `{TEST_MANAGER_NAME}`
-2. Test Suite name → `{TEST_SUITE_NAME}`
-3. Test Case name → `{TEST_CASE_NAME}`
-4. Test Assessment name → `{TEST_ASSESSMENT_NAME}`
-5. Test Assessment level (MIL or HIL) → `{ASSESSMENT_LEVEL}`
-6. Test Assessment type (verification) → `{ASSESSMENT_TYPE}`
+### Step 7: Create Requirements Links
 
-### Step 7: Finalize MATLAB
+Create requiremnet links between the correspondents requeriment and test case. For this, read and execute the `create-requirement-link/SKILL.md` skill using `view`. Pass the following parameters to that skill:
+
+1. Matlab variable with requirement set → `{REQQUIREMENTS_SET}`
+2. Test Manager name → `{TEST_MANAGER_NAME}`
+
+
+### Step 8: Finalize MATLAB
 
 Close MATLAB. Use `evaluate_matlab_code` with:
 ```matlab
