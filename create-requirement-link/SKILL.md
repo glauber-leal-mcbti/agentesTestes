@@ -40,8 +40,9 @@ All artifacts created or modified by the agent must be marked. No exceptions.
 
 Use `AskUserQuestion` to collect interactively, or retrieve the data from the skill that triggered this execution.
 
-1. Matlab variable with requirement set → `{REQQUIREMENTS_SET}`
+1. Matlab variable with requirement set → `{REQUIREMENTS_SET}`
 2. Test Manager name → `{TEST_MANAGER_NAME}`
+3. Tests Harness names → `{TOTAL_HARNESS}`
 
 Assume the project is already configured in the MATLAB environment.
 
@@ -53,18 +54,18 @@ tf = sltest.testmanager.load('{TEST_MANAGER_NAME}');
 ```
 If MATLAB reports that the Test Manager does not exist, raise the error | Non-existent Test Manager |
 
-### Step 3: Create Links
+### Step 3: Create Test Manager Links
 
-Use the folowing command to find the total number of requirements.  Use `evaluate_matlab_code` with:
+Use the folowing command to find the total number of requirements. Use `evaluate_matlab_code` with:
 ```matlab
-n_req = length(requirements)
+n_req = length({REQUIREMENTS_SET})
 ```
 For every 1 : n: 'n_req', take the requirement ID. Save the number of this requiriment in `{n}`. Use `evaluate_matlab_code` with:
 ```matlab
-rId = requirements(n).Id;
+rId = {REQUIREMENTS_SET}(n).Id;
 ```
 
-Now for every 1 : n: 'n_req' find the correspondent test case that implements tha requeriment. For this use the following commands to read the Test Manager and find the test cases, save the correct test case in `{tcLink}`. Use `evaluate_matlab_code` with:
+Now for every 1 : n: 'n_req' find the correspondent test case that implements that requeriment. For this use the following commands to read the Test Manager and find the test cases, save the correct test case in `{tcLink}`. Use `evaluate_matlab_code` with:
 ```matlab
 ts = getTestSuites(tf);
 ts_lengh = length(ts);
@@ -74,10 +75,35 @@ tc_lenght = length(tc);
 
 Finally create the link between the correct pair test case and requirement. Use `evaluate_matlab_code` with:
 ```matlab
-myLink = slreq.createLink(tcLink,requirements(n));
+myLink = slreq.createLink(tcLink,{REQUIREMENTS_SET}(n));
 ```
 
 Repeat this proccess for create links for all requirements implemented.
+
+### Step 4: Create Test Harness Links
+Create the link between the correct pair Test Assessment Block, from a test harness, and requeriment. The harness names are avalaibe in `{TOTAL_HARNESS}`. The requirements area avaliable at `{REQUIREMENTS_SET}`, with lengh 1 : n: 'n_req'. Use `evaluate_matlab_code` with:
+
+```matlab
+  % 1. Load harness as standalone system (REQUIRED so MATLAB
+  %    attributes the link to the harness .mdl, not the parent model)
+  load_system(fullfile({HARNESS_FOLDER}, [{HARNESS_NAME} '.mdl']));
+
+  % 2. Resolve block to a handle — avoids string-path resolution ambiguity
+  taBlockPath = [{HARNESS_NAME} '/Test Assessment Block'];
+  blkHandle   = getSimulinkBlockHandle(taBlockPath, true);
+
+  if blkHandle == -1
+      warning('Block not found: %s — skipping link.', taBlockPath);
+  else
+      % 3. Create link using the block handle, not a string
+      slreq.createLink(blkHandle, {REQUIREMENTS_SET}(n));
+  end
+
+  save_system({HARNESS_NAME});
+  bdclose({HARNESS_NAME});
+
+  {REQUIREMENTS_SET_VARIABLE}.save()
+```
 
 ### Step 5: Close the Test Manager
 
@@ -94,3 +120,4 @@ tf.close();
 | Non-existent Test Manager | Notify the skill caller that the file `{TEST_MANAGER_NAME}` does not exist in the project context |
 | Non-existent Test Suite | Notify the skill caller that the instance `{TEST_SUITE_NAME}` does not exist in the project context |
 | Existing Test Case | Notify the skill caller that the Test Case already exists and can be used |
+| Block not found | Notify the skill caller |

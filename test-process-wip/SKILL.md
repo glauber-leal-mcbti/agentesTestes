@@ -104,7 +104,7 @@ Use the `create-harness-mdl` skill to generate the test harness that verifies th
   - Inputs → `{INPUTS}`
   - Expected outputs → `{EXPECTED_OUTPUTS}`
 
-Save the names of the generated harnesses for the next step.
+Save the names of the generated harnesses for the next step on `{TOTAL_HARNESS}`
 
 ### Step 6: Create test structure
 
@@ -134,6 +134,7 @@ Create requiremnet links between the correspondents requeriment and test case. F
 
 1. Matlab variable with requirement set → `{REQQUIREMENTS_SET}`
 2. Test Manager name → `{TEST_MANAGER_NAME}`
+3. Tests Harness names → `{TOTAL_HARNESS}`
 
 
 ### Step 8: Finalize MATLAB
