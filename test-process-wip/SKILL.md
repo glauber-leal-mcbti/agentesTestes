@@ -94,8 +94,6 @@ Read the file `{TEST_PLAN_FILE}` and associate the test plan to each identified 
 
 Test harnesses must be saved in the most appropriate directory available in the project architecture, according to the test scope and the model under test. Save this path in `{TEST_FOLDER}`.
 
-Launch one agent per requirement to be tested.
-
 Use the `create-harness-mdl` skill to generate the test harness that verifies the requirement. Based on the requirement and the test plan, generate the necessary inputs `{INPUTS}` and the expected model output values for the test to be considered passing `{EXPECTED_OUTPUTS}`. Execute the `create-harness-mdl` skill passing the following values:
   - .slx model → `{TEST_MODEL}`
   - Harness name → requirement number plus the model name `{TEST_MODEL}`
