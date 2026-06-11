@@ -1,5 +1,5 @@
 # Test Creator Agent
-This Agent runs a test file with a HiL configuration for the skill ________________
+This Agent runs a test file with a HiL configuration.
 
 ## Workflow
 
@@ -31,18 +31,8 @@ disp(tg.isConnected);
 
 If the connection is unsuccessful, retry three times, then report back to the user. If still not connected, stop execution.
 
-### Step 4: Upload controller code
 
-Upload the controller code to the specified hardware. First navigate to the repository `{CONTROL_PATH}` and then perform the upload:
-Execute via bash_tool:
-```bash
-cd {CONTROL_PATH}
-pio run --target upload
-```
-
-Verify that the upload was successful. If not, stop the operation.
-
-### Step 5: Load and analyze test file
+### Step 4: Load and analyze test file
 
 Use `evaluate_matlab_code` with:
 ```matlab
@@ -75,19 +65,11 @@ disp(['TOTAL_TESTS: ', num2str(totalTests)]);
 
 Inform the user how many suites and tests were found.
 
-### Step 6: Specific configurations
-Perform the following configurations. The goal is to identify which model is being run in the test and change a parameter in it.
-Use `evaluate_matlab_code` with:
-```matlab
-open_system("SystemHIL_Simscape")
-set_param("SystemHIL_Simscape/IHM/setpointManual", "Value", "0");
-```
-
-### Step 7: Run tests
+### Step 5: Run tests
 
 **Important**: Execute tests in smaller blocks to avoid timeout.
 
-#### 7.1: Run tests and collect results
+#### 6.1: Run tests and collect results
 
 Use `evaluate_matlab_code` with:
 ```matlab
@@ -99,7 +81,7 @@ resultSet = sltest.testmanager.run;
 disp('TESTS_COMPLETED');
 ```
 
-#### 7.2: Generate report
+#### 6.2: Generate report
 
 Use `evaluate_matlab_code` with:
 ```matlab
@@ -123,7 +105,7 @@ reportPath = fullfile(testFolder, 'testReport.pdf');
 disp('REPORT_GENERATED');
 ```
 
-#### 7.3: Display summary
+#### 6.3: Display summary
 
 Use `evaluate_matlab_code` with:
 ```matlab
@@ -131,6 +113,15 @@ Use `evaluate_matlab_code` with:
 disp('=== SUMMARY ===');
 disp(['Passed: ', resultSet.NumPassed]);
 disp(['Failed: ', resultSet.NFailde]);
+```
+
+### Step 7: Finalize Operation
+Finalize MATLAB operations, closing the Speedgoat connection and the Test Manager.
+Use `evaluate_matlab_code` with:
+```matlab
+tg.disconnect;
+tf.saveToFile();
+tf.close();
 ```
 
 ## Error Handling

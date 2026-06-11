@@ -1,6 +1,6 @@
 ---
-name: run-speedgoat-test
-description: "Executes tests from a Simulink Test Manager .mldatx file on a Speedgoat target provided by the user. Use this skill whenever the user mentions: 'run speedgoat test', 'start speedgoat test', or any reference to running tests on a Speedgoat."
+name: run-simulink-test
+description: "Executes tests from a Simulink Test Manager .mldatx file on diffrent configurations, provided by the user. Use this skill whenever the user mentions: 'run simulink test', 'start simulink  test', or any reference to running tests with Simulink."
 ---
 
 ## Prerequisites
@@ -56,6 +56,8 @@ The project context will already be configured in MATLAB.
 
 ### Step 3: Tests Executions
 
+On multiples managers, generate one report for manager.
+
 If the `{TEST_LEVEL}` is MiL, launch the agent run-mil-test with the parameters:
  - Porject directory → `{PROJECT_DIR}`
    - MATLAB version → `{MATLAB_VERSION}`
@@ -64,7 +66,16 @@ If the `{TEST_LEVEL}` is MiL, launch the agent run-mil-test with the parameters:
    - Report title → `{TEST_SPECIFICATION_DETAILS}`
    - Test autor → `{TEST_FILE_AUTHOR}`
 
-If the `{TEST_LEVEL}` is HiL, launch the agent run-speedgoat-test with the parameters:
+If the `{TEST_LEVEL}` is HiL, launch the agent run-hil-test with the parameters:
+   - Porject directory → `{PROJECT_DIR}`
+   - MATLAB version → `{MATLAB_VERSION}`
+   - Project file name (.prj) → `{PRJ_NAME}`
+   - Simulink Test Manager file name (.mldatx) → `{TEST_MANAGER}`
+   - Speedgoat target name → `{SPEEDGOAT_NAME}`
+   - Report title → `{TEST_SPECIFICATION_DETAILS}`
+   - Test autor → `{TEST_FILE_AUTHOR}`
+
+If the `{TEST_LEVEL}` is HiL-Controller, launch the agent run-hil-test with the parameters:
    - Porject directory → `{PROJECT_DIR}`
    - MATLAB version → `{MATLAB_VERSION}`
    - Project file name (.prj) → `{PRJ_NAME}`
@@ -116,12 +127,9 @@ If there are failed tests, list them below:
 ```
 
 ### Step 5: Finalize MATLAB
-Finalize MATLAB operations, closing the Speedgoat connection and the Test Manager.
+Finalize MATLAB operations.
 Use `evaluate_matlab_code` with:
 ```matlab
-tg.disconnect
-tf.saveToFile();
-tf.close();
 exit;
 ```
 Close MATLAB.

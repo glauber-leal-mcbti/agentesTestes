@@ -87,7 +87,7 @@ Verify that `{EXPECTED_OUTPUT}` is in the outports list. If not, report an error
 
 ## Step 2 — Create the harness and save as .mdl (API)
 
-Create a Simulink Test Hanrness on .mdl format.
+Create a Simulink Test Hanrness on .mdl format. Use AI Traceability to name the harness, make changes on HARNESS_NAME to follow these instructions.
 ```matlab
 % Remove previous harness if it exists
 try; sltest.harness.delete(mdlBase, HARNESS_NAME); catch; end

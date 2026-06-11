@@ -1,5 +1,5 @@
 # Test Creator Agent
-This Agent runs a test file with a MiL configuration.
+This Agent runs a test file with a HiL and Controller configuration.
 
 ## Workflow
 
@@ -10,11 +10,39 @@ Read the inputs from the caller skill:
    - MATLAB version → `{MATLAB_VERSION}`
    - Project file name (.prj) → `{PRJ_NAME}`
    - Simulink Test Manager file name (.mldatx) → `{TEST_MANAGER}`
+   - Speedgoat target name → `{SPEEDGOAT_NAME}`
+   - Controller repository path → `{CONTROL_PATH}`
    - Report title → `{TEST_SPECIFICATION_DETAILS}`
    - Test autor → `{TEST_FILE_AUTHOR}`
 
 
-### Step 2: Load and analyze test file
+### Step 3: Connect to Speedgoat
+
+Use `evaluate_matlab_code` with:
+```matlab
+tg = slrealtime;
+tg.connect
+```
+To establish the connection with the Speedgoat. Verify the connection was successful if the following function returns 1:
+Use `evaluate_matlab_code` with:
+```matlab
+disp(tg.isConnected);
+```
+
+If the connection is unsuccessful, retry three times, then report back to the user. If still not connected, stop execution.
+
+### Step 4: Upload controller code
+
+Upload the controller code to the specified hardware. First navigate to the repository `{CONTROL_PATH}` and then perform the upload:
+Execute via bash_tool:
+```bash
+cd {CONTROL_PATH}
+pio run --target upload
+```
+
+Verify that the upload was successful. If not, stop the operation.
+
+### Step 5: Load and analyze test file
 
 Use `evaluate_matlab_code` with:
 ```matlab
@@ -47,11 +75,19 @@ disp(['TOTAL_TESTS: ', num2str(totalTests)]);
 
 Inform the user how many suites and tests were found.
 
-### Step 3: Run tests
+### Step 6: Specific configurations
+Perform the following configurations. The goal is to identify which model is being run in the test and change a parameter in it.
+Use `evaluate_matlab_code` with:
+```matlab
+open_system("SystemHIL_Simscape")
+set_param("SystemHIL_Simscape/IHM/setpointManual", "Value", "0");
+```
+
+### Step 7: Run tests
 
 **Important**: Execute tests in smaller blocks to avoid timeout.
 
-#### 3.1: Run tests and collect results
+#### 7.1: Run tests and collect results
 
 Use `evaluate_matlab_code` with:
 ```matlab
@@ -63,7 +99,7 @@ resultSet = sltest.testmanager.run;
 disp('TESTS_COMPLETED');
 ```
 
-#### 3.2: Generate report
+#### 7.2: Generate report
 
 Use `evaluate_matlab_code` with:
 ```matlab
@@ -87,7 +123,7 @@ reportPath = fullfile(testFolder, 'testReport.pdf');
 disp('REPORT_GENERATED');
 ```
 
-#### 3.3: Display summary
+#### 7.3: Display summary
 
 Use `evaluate_matlab_code` with:
 ```matlab
@@ -97,10 +133,11 @@ disp(['Passed: ', resultSet.NumPassed]);
 disp(['Failed: ', resultSet.NFailde]);
 ```
 
-### Step 4: Finalize Operation
-Finalize MATLAB operations, closing the Test Manager.
+### Step 8: Finalize Operation
+Finalize MATLAB operations, closing the Speedgoat connection and the Test Manager.
 Use `evaluate_matlab_code` with:
 ```matlab
+tg.disconnect;
 tf.saveToFile();
 tf.close();
 ```
