@@ -1,125 +1,133 @@
 # Test Creator Agent
 
-Cria um arquivo de teste unitário para um requisito específico do MATLAB.
+Creates a unit test file for a specific MATLAB requirement.
 
 ## Role
 
-Recebe informações pré-analisadas sobre um script MATLAB e um requisito específico, e gera um arquivo de teste unitário seguindo o padrão `matlab.unittest`.
+Receives pre-analyzed information about a MATLAB script and a specific requirement, then generates a unit test file following the `matlab.unittest` framework.
 
 ## Inputs
 
-Dados do script (analisados pelo coordenador):
-- `script_path`: Caminho do script .m
-- `script_name`: Nome do script
-- `script_functions`: Lista de funções identificadas no script
-- `script_inputs`: Inputs do script
-- `script_outputs`: Outputs do script
+Script data (analyzed by the coordinator):
 
-Dados do requisito (analisados pelo coordenador):
-- `requirement_name`: Nome/ID do requisito
-- `requirement_description`: Descrição do requisito
-- `requirement_inputs`: Inputs esperados para este requisito
-- `requirement_outputs`: Outputs esperados para este requisito
-- `acceptance_criteria`: Critérios de aceitação
+* `script_path`: Path to the `.m` script
+* `script_name`: Script name
+* `script_functions`: List of functions identified in the script
+* `script_inputs`: Script inputs
+* `script_outputs`: Script outputs
 
-Configuração:
-- `output_dir`: Diretório onde salvar o arquivo de teste
+Requirement data (analyzed by the coordinator):
+
+* `requirement_name`: Requirement name/ID
+* `requirement_description`: Requirement description
+* `requirement_inputs`: Expected inputs for this requirement
+* `requirement_outputs`: Expected outputs for this requirement
+* `acceptance_criteria`: Acceptance criteria
+
+Configuration:
+
+* `output_dir`: Directory where the test file will be saved
 
 ## Process
 
-### Passo 1: Validar inputs
+### Step 1: Validate Inputs
 
-Verifique se todos os parâmetros necessários foram recebidos:
-- Se faltar algum dado crítico, reporte erro e interrompa
+Verify that all required parameters have been provided:
 
-### Passo 2: Definir estrutura do teste
+* If any critical information is missing, report an error and stop execution.
 
-Com base nos dados recebidos, defina:
-- Nome do arquivo: `test_{requirement_name}.m`
-- Nome da classe: `test_{requirement_name}`
-- Métodos de teste necessários para cobrir o requisito
+### Step 2: Define Test Structure
 
-### Passo 3: Criar arquivo de teste
+Based on the provided data, define:
 
-Use `create_file` para criar o arquivo `{output_dir}/test_{requirement_name}.m`:
+* File name: `test_{requirement_name}.m`
+* Class name: `test_{requirement_name}`
+* Required test methods to cover the requirement
+
+### Step 3: Create Test File
+
+Use `create_file` to create the file `{output_dir}/test_{requirement_name}.m`:
+
 ```matlab
 classdef test_{requirement_name} < matlab.unittest.TestCase
     % =================================================================
-    % Teste gerado automaticamente
-    % Script analisado: {script_name}.m
-    % Requisito coberto: {requirement_name}
-    % Descrição: {requirement_description}
+    % Automatically generated test
+    % Analyzed script: {script_name}.m
+    % Covered requirement: {requirement_name}
+    % Description: {requirement_description}
     % =================================================================
     
     properties
-        % Propriedades compartilhadas entre os testes
+        % Properties shared across tests
     end
     
     methods (TestClassSetup)
         function setupClass(testCase)
-            % Configuração executada uma vez antes de todos os testes
+            % Setup executed once before all tests
         end
     end
     
     methods (TestMethodSetup)
         function setupMethod(testCase)
-            % Configuração executada antes de cada teste
+            % Setup executed before each test
         end
     end
     
     methods (Test)
-        function test_{requirement_name}_caso_n(testCase)
-            % Teste do caso n
-            % Input esperado: {requirement_inputs}
-            % Output esperado: {requirement_outputs}
+        function test_{requirement_name}_case_n(testCase)
+            % Test case n
+            % Expected input: {requirement_inputs}
+            % Expected output: {requirement_outputs}
             
             % Arrange
             input = {requirement_inputs};
             expected = {requirement_outputs};
             
             % Act
-            resultado = {script_function}(input);
+            result = {script_function}(input);
             
             % Assert
-            testCase.verifyEqual(resultado, expected, ...
-                'Falha no caso n do requisito {requirement_name}');
+            testCase.verifyEqual(result, expected, ...
+                'Failure in case n of requirement {requirement_name}');
         end
         
     end
 end
 ```
 
-Adapte o template conforme:
-- Funções recebidas em `script_functions`
-- Inputs/outputs do requisito
-- Critérios de aceitação em `acceptance_criteria`
-- Substitua `caso_n` pelo nome do caso criado
-- Restrinja a criação de casos apenas ao que o requisito está abordando
+Adapt the template according to:
 
-### Passo 4: Confirmar criação
+* Functions provided in `script_functions`
+* Requirement inputs and outputs
+* Acceptance criteria in `acceptance_criteria`
+* Replace `case_n` with a meaningful test case name
+* Restrict test creation only to scenarios covered by the requirement
 
-Após criar o arquivo:
-1. Use `view` para verificar se o conteúdo está correto
-2. Confirme que a sintaxe MATLAB está válida
-3. Reporte sucesso ou erro
+### Step 4: Confirm Creation
+
+After creating the file:
+
+1. Use `view` to verify that the content is correct.
+2. Confirm that the MATLAB syntax is valid.
+3. Report success or failure.
 
 ## Output
 
-- Arquivo: `{output_dir}/test_{requirement_name}.m`
-- Status: sucesso ou erro com descrição
+* File: `{output_dir}/test_{requirement_name}.m`
+* Status: success or error with description
 
 ## Error Handling
 
-| Erro | Ação |
-|------|------|
-| Parâmetros faltando | Reportar quais parâmetros estão ausentes |
-| Falha ao criar arquivo | Tentar novamente uma vez, depois reportar erro |
-| Diretório inexistente | Criar diretório com `mkdir -p {output_dir}` |
+| Error                    | Action                                         |
+| ------------------------ | ---------------------------------------------- |
+| Missing parameters       | Report which parameters are missing            |
+| File creation failure    | Retry once, then report an error               |
+| Directory does not exist | Create directory using `mkdir -p {output_dir}` |
 
 ## Guidelines
 
-- Não faça análises redundantes — use os dados recebidos do coordenador
-- Mantenha nomes de variáveis consistentes com o script original
-- Inclua comentários claros em português
-- Siga o padrão AAA (Arrange, Act, Assert) nos testes
-- Crie pelo menos um teste nominal e um teste de borda por requisito
+* Do not perform redundant analysis — use the data provided by the coordinator.
+* Keep variable names consistent with the original script.
+* Include clear comments in English.
+* Follow the AAA (Arrange, Act, Assert) testing pattern.
+* Create at least one nominal test and one edge-case test for each requirement.

@@ -1,6 +1,6 @@
 ---
 name: create-requirement-link
-description: "Creates a requirement links between the correspondent requieremnt and test case. Use this skill whenever the user mentions: 'create requirement lin', 'new requirement link', or any reference to creating requirements links."
+description: "Creates a requirement links between the correspondent requieremnt, test case, and test harness assessment block. Use this skill whenever the user mentions: 'create requirement link', 'new requirement link', or any reference to creating requirements links."
 ---
 
 ## Prerequisites

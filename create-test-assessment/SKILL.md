@@ -1,6 +1,6 @@
 ---
 name: create-test-assessment
-description: "Creates a test assessment for an adopted Test Manager, Test Suite, and Test Case. The assessment is created from a template copy. Use this skill whenever the user mentions: 'create test assessment', 'new test assessment', or any reference to creating test assessments."
+description: "Creates a test assessment for an adopted Test Manager, Test Suite, and Test Case. The assessment is created from a template. Use this skill whenever the user mentions: 'create test assessment', 'new test assessment', or any reference to creating test assessments."
 ---
 
 ## Prerequisites

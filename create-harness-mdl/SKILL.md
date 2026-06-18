@@ -1,6 +1,6 @@
 ---
 name: create-harness-mdl
-description: "Creates a test harness in .mdl format from a .slx model and a provided requirement. Uses a hybrid approach: MATLAB API for creation and simulation, direct Read/Grep/Edit on the .mdl for inspection and content configuration (Test Sequence steps, symbols, block cleanup). Use this skill whenever the user mentions: 'create harness with assertion'."
+description: "Creates a test harness in .mdl format from a .slx model and a provided requirement. Uses a hybrid approach: MATLAB API for creation and simulation, direct Read/Grep/Edit on the .mdl for inspection and content configuration (Test Sequence steps, symbols, block cleanup). Use Test Assertion verifiation . Use this skill whenever the user mentions: 'create harness with assertion'."
 ---
 
 # Create Test Harness in .mdl Format
