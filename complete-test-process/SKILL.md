@@ -1,5 +1,5 @@
 ---
-name: test-process-wip
+name: complete-test-process
 description: "Manages the complete test creation process in Simulink — not yet finalized (Work in Progress). Use this skill whenever the user mentions: 'complete test process', 'generate complete tests', or any reference to creating a complete test environment."
 ---
 
