@@ -3,18 +3,6 @@ name: open-matlab-project
 description: "Configures a MATLAB environment with a .prj project for use by other skills. Use this skill whenever the user mentions: 'open matlab project', 'configure matlab project', or as a prerequisite for other MATLAB skills."
 ---
 
-## Prerequisites
-- MATLAB installed with a valid license
-- matlab-mcp-server installed and connected
-
-## Available MCP Tools
-
-| Tool | Usage |
-|------|-------|
-| `evaluate_matlab_code` | Executes MATLAB code |
-| `run_matlab_script` | Executes a .m script |
-| `check_matlab_code` | Analyzes code |
-
 ## Workflow
 
 ### Step 1: Collect user information

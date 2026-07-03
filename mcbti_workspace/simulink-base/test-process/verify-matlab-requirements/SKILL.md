@@ -3,19 +3,6 @@ name: verify-matlab-requirements
 description: "Loads, checks, and lists all requirements present in a .slreqx requirements file, with their information and links to models. Use this skill whenever the user mentions: 'verify matlab requirements', 'check matlab requirements', or any reference to reading requirements from MATLAB files."
 ---
 
-## Prerequisites
-- MATLAB installed with a valid license
-- matlab-mcp-server installed
-- matlab-mcp-server configured and connected
-
-## Available MCP Tools
-
-| Tool | Usage |
-|------|-------|
-| `evaluate_matlab_code` | Executes MATLAB code |
-| `run_matlab_script` | Executes a .m script |
-| `check_matlab_code` | Analyzes code |
-
 ## Requirements Structure
 | Requirement Type | Abbreviation | Meaning |
 |------------------|--------------|---------|
